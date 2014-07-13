@@ -153,7 +153,7 @@ public void testConvert2() {
        /**
         * Test support of an image.
         */
-       public void Testissupported() {
+       public void testissupported() {
          assertEquals(new Image().isSupportedImage("jpg"), true);
        }
         /**
@@ -487,20 +487,6 @@ public void testUnsharpfilter() {
   }
   assertNotNull(b);
 }
-///**
-// * Test Glowfilter of an image.
-// */
-//@Test
-//public void testGlowfilter() {
-//  B64 b = null;
-//  try {
-//    b = new Image().glowfilter(new B64(new IOFile("bird.jpg").read()));
-//  } catch (Exception e) {
-//    // TODO Auto-generated catch block
-//    e.printStackTrace();
-//  }
-//  assertNotNull(b);
-//}
 /**
  * Test gradient of an image.
  */

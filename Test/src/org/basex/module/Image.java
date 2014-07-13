@@ -131,14 +131,11 @@ public class Image extends QueryModule{
 	 * @throws Exception exception
 	 */
 	public B64 resize(final B64 input, final Int w, final Int h) throws Exception {
-		 // reads input image
 		int width = (int) w.itr();
 		int height = (int) h.itr();
        BufferedImage inputImage = toImage(input);
-        // creates output image
         BufferedImage outputImage = new BufferedImage(width,
         		height, inputImage.getType());
-        // scales the input image to the output image
         Graphics2D g2d = outputImage.createGraphics();
         g2d.drawImage(inputImage, 0, 0, width, height, null);
         g2d.dispose();
@@ -154,16 +151,13 @@ public class Image extends QueryModule{
 	 * @throws Exception exception
 	 */
 	public B64 zoom(final B64 input, final Int w, final Int h) throws Exception {
-		 // reads input image
-      BufferedImage inputImage = toImage(input);
+		  BufferedImage inputImage = toImage(input);
       int width = (int) w.itr();
       int height = (int) h.itr();
 
-       // creates output image
        BufferedImage outputImage = new BufferedImage(width,
        		height, inputImage.getType());
 
-       // scales the input image to the output image
        Graphics2D g2d = outputImage.createGraphics();
        g2d.drawImage(inputImage, 0, 0, width, height, null);
        g2d.dispose();
@@ -178,14 +172,11 @@ public class Image extends QueryModule{
 	 * @throws Exception exception
 	 */
 	public B64 zoomheight(final B64 input, final Int h) throws Exception {
-		 // reads input image
-   BufferedImage inputImage = toImage(input);
+		  BufferedImage inputImage = toImage(input);
     int height = (int) h.itr();
-		// creates output image
-       BufferedImage outputImage = new BufferedImage(inputImage.getWidth(),
+		    BufferedImage outputImage = new BufferedImage(inputImage.getWidth(),
        		height, inputImage.getType());
-       // scales the input image to the output image
-       Graphics2D g2d = outputImage.createGraphics();
+        Graphics2D g2d = outputImage.createGraphics();
        g2d.drawImage(inputImage, 0, 0, inputImage.getWidth(), height, null);
        g2d.dispose();
        B64 b = toBinary(outputImage, format(input));
@@ -315,7 +306,7 @@ public class Image extends QueryModule{
 	   final ImageInputStream iis = ImageIO.createImageInputStream(bais);
 	   final Iterator<ImageReader> it = ImageIO.getImageReaders(iis);
 	   if(it.hasNext()) {
-		   ImageReader ir = /*(ImageReader)*/ it.next();
+		   ImageReader ir =  it.next();
 		   return ir.getFormatName();
 	   }
 	   throw new QueryException("Input format cannot be detected");
@@ -378,10 +369,8 @@ public class Image extends QueryModule{
 	    BufferedImage img = null;
 	    B64 b = null;
 	     float quality = (int) p.itr();
-//	        File file = new File(filename);
 	        img = toImage(input);
 	        Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName(format(input));
-	        //Then, choose the first image writer available
 	        @SuppressWarnings("cast")
           ImageWriter writer = (ImageWriter) iter.next();
 	        //instantiate an ImageWriteParam object with default compression options
@@ -487,7 +476,7 @@ public class Image extends QueryModule{
 	   float[] edgeArr = {0, -1, 0, -1, edgeVal, -1, 0, -1, 0};
        ConvolveOp edgeOp = new ConvolveOp(new Kernel(3, 3, edgeArr),
            ConvolveOp.EDGE_NO_OP, null);
-        outputImage = edgeOp.filter(binput, null);  //operating on image
+        outputImage = edgeOp.filter(binput, null);
        		b = toBinary(outputImage, format(input));
        		return b;
 	}
@@ -582,7 +571,7 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	 */
 	public ValueBuilder chop(final B64 input, final Int r, final Int c) throws Exception {
 	   	final ValueBuilder vb = new ValueBuilder();
-	        BufferedImage image = toImage(input); //reading the image file
+	        BufferedImage image = toImage(input);
 
 	        int rows = (int) r.itr();
 	        int cols = (int) c.itr();
@@ -632,7 +621,6 @@ public B64 noise(final B64 input, final Int value) throws Exception {
         Graphics g = image.getGraphics();
         g.drawImage(initImage, 0, 0, null);
 
-        //System.out.println("before: " + image.getRGB(0, 0));
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 int pixel = image.getRGB(x, y);
@@ -658,13 +646,12 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	 */
 	 public B64 sharpen(final B64 input) throws Exception {
 		  B64 b = null;
-	    	//float ninth = 1.0f / 9.0f;
 		  float opacity = 5.9f;
 		  float opi = opacity - 1.0f;
 		 float[] identityKernel = {
-			       opacity, opi, opacity,	 //0.0f, -1.0f, 0.0f,
-			        opi, opacity + 5.0f, opi,  //  -1.0f, 5.0f, -1.0f,
-			        opacity, opi, opacity	 //0.0f, -1.0f, 0.0f
+			       opacity, opi, opacity,
+			        opi, opacity + 5.0f, opi,
+			        opacity, opi, opacity
 		  };
 		  BufferedImage p = toImage(input);
 		  BufferedImageOp identity =
@@ -703,15 +690,11 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	  */
 	  public B64 blacknWhite(final B64 input) throws Exception {
 		   B64 b = null;
-	    	// Read an image.
 	    		       BufferedImage bi = toImage(input);
-	    		       // Create a black-and-white image of the same size.
 	    		       BufferedImage im =
 	    		         new BufferedImage(bi.getWidth(),
 	    		             bi.getHeight(), BufferedImage.TYPE_BYTE_BINARY);
-	    		      // Get the graphics context for the black-and-white image.
 	    		       Graphics2D g2d = im.createGraphics();
-	    		       // Render the input image on it.
 	    		       g2d.drawImage(bi, 0, 0, null);
 	    		     b = toBinary(im, format(input));
 	       return b;
@@ -751,7 +734,6 @@ public B64 noise(final B64 input, final Int value) throws Exception {
          biDest = new BufferedImage(b.getWidth(), b.getHeight(), BufferedImage.TYPE_INT_RGB);
               bi = biSrc;
 		   RescaleOp rescale;
-		  //  float scaleFactor = Quality;
 		    float offset = 10;
 		  rescale = new RescaleOp(quality, offset, null);
 	        rescale.filter(biSrc, biDest);
@@ -856,8 +838,7 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	        src.getRGB(0, 0, width, height, inPixels, 0, width);
 
 			if (rad > 0) {
-       // boolean premultiplyAlpha = true;
-			Gausian.convolveAndTranspose(makeKernel(rad), inPixels, outPixels, width, height,
+    	Gausian.convolveAndTranspose(makeKernel(rad), inPixels, outPixels, width, height,
 			    alpha, alpha && premultiplyAlpha, false, clampedges);
 			Gausian.convolveAndTranspose(makeKernel(rad), outPixels, inPixels, height, width,
 			    alpha, false, alpha && premultiplyAlpha, clampedges);
@@ -893,10 +874,6 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	        int[] outPixels = new int[width * height ];
 	        getRGB(src, 0, 0, width, height, inPixels);
 
-//			float sinAngle = (float)Math.sin(ang);
-//			float cosAngle = (float)Math.cos(ang);
-
-		//	float total;
 			int cx = width / 2;
 			int cy = height / 2;
 			int index = 0;
@@ -910,7 +887,6 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 			Point2D.Float p = new Point2D.Float();
 
 	        if (premultiplyAlpha)
-			//.premultiply( inPixels, 0, inPixels.length );
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < width; x++) {
 					int a = 0, r = 0, g = 0, b = 0;
@@ -965,7 +941,6 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 				}
 			}
 	        if (premultiplyAlpha)
-			//	ImageMath.unpremultiply( outPixels, 0, inPixels.length );
 
 	        setRGB(dst, 0, 0, width, height, outPixels);
 	        b1 = toBinary(dst, format(input));
@@ -990,8 +965,6 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 
 	        int width = src.getWidth();
 	        int height = src.getHeight();
-//      float hRadius2 = 3.2f;
-//      float vRadius2 =3.2f;
        if (dst == null)
 	            dst = createCompatibleDestImage(src, null);
 
@@ -1000,7 +973,6 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	        getRGB(src, 0, 0, width, height, inPixels);
 
 	        if (premultiplyAlpha)
-				//ImageMath.premultiply( inPixels, 0, inPixels.length );
 			for (int i = 0; i < iterations; i++) {
 	         BoxBlurFilter.blur(inPixels, outPixels, width, height, hRadius2);
 	         BoxBlurFilter.blur(outPixels, inPixels, height, width, vRadius2);
@@ -1008,7 +980,6 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	        BoxBlurFilter.blurFractional(inPixels, outPixels, width, height, hRadius2);
 	        BoxBlurFilter.blurFractional(outPixels, inPixels, height, width, vRadius2);
 	        if (premultiplyAlpha)
-				//ImageMath.unpremultiply( inPixels, 0, inPixels.length );
            setRGB(dst, 0, 0, width, height, inPixels);
 	        b = toBinary(dst, format(input));
 	        return b;
@@ -1035,8 +1006,6 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	        int tileWidth = 128;
 	        int tileHeight = tileWidth;
 
-//	        int adjustedWidth = /*(int)*/(width + iradius*2);
-//	        int adjustedHeight = /*(int)*/(height + iradius*2);
 
 			tileWidth = iradius < 32 ? Math.min(128, width + 2 * iradius)
 			                         : Math.min(256, width + 2 * iradius);
@@ -1058,8 +1027,7 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	        int h = rows;
 
 			tileWidth = w;
-			tileHeight = h; //FIXME-tileWidth, w, and cols are always all the same
-
+			tileHeight = h;
 	        FFT fft = new FFT(Math.max(log2rows, log2cols));
 
 	        int[] rgb = new int[w * h];
@@ -1067,7 +1035,6 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	        float[][] gb = new float[2][w * h];
 	        float[][] ar = new float[2][w * h];
 
-	        // Create the kernel
 			double polyAngle = Math.PI / sides;
 			double polyScale = 1.0f / Math.cos(polyAngle);
 			double r2 = radius * radius;
@@ -1098,7 +1065,6 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	            }
 	        }
 
-	        // Normalize the kernel
 	        i = 0;
 	        for (int y = 0; y < h; y++) {
 	            for (int x = 0; x < w; x++) {
@@ -1107,13 +1073,10 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	            }
 	        }
 
-	        /*(FFT)*/ fft.transform2D(mask[0], mask[1], w, h, true);
+	        fft.transform2D(mask[0], mask[1], w, h, true);
 
 	        for (int tileY = -iradius; tileY < height; tileY += tileHeight - 2 * iradius) {
 	            for (int tileX = -iradius; tileX < width; tileX += tileWidth - 2 * iradius) {
-//	                System.out.println("Tile: "+tileX+" "+tileY+" "+tileWidth+" "+tileHeight);
-
-	                // Clip the tile to the image bounds
 	                int tx = tileX, ty = tileY, tw = tileWidth, th = tileHeight;
 	                int fx = 0, fy = 0;
 	                if (tx < 0) {
@@ -1132,8 +1095,6 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	                    th = height - ty;
 	                src.getRGB(tx, ty, tw, th, rgb, fy * w + fx, w);
 
-	                // Create a float array from the pixels.
-	                //Any pixels off the edge of the source image get duplicated from the edge.
 	                i = 0;
 	                for (int y = 0; y < h; y++) {
 	                    int imageY = y + tileY;
@@ -1462,12 +1423,6 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	        b = toBinary(dst, format(input));
 	        return b;
 	    }
-	   /**
-	    * Gives a glowing image.
-	    * @param input B64
-	    * @return Image
-	   * @throws Exception  exception
-	    */
 		  /**
 	   * sets the radius according to the kernel.
 	   * @param radius float
