@@ -164,7 +164,7 @@ public void testConvert2() {
    B64 b = null;
    try {
      b = new Image().cropImage(new B64(new IOFile("bird.jpg").read()),
-         Int.get(20), Int.get(20));
+         Int.get(20), Int.get(20), Int.get(200), Int.get(120));
    } catch (Exception e) {
      // TODO Auto-generated catch block
      e.printStackTrace();
@@ -185,21 +185,6 @@ public void testresize() {
     e.printStackTrace();
   }
  assertNotNull(b);
-}
-/**
- * Test to zoom an image.
-  */
-@Test
-public void testzoom() {
-  B64 b = null;
-  try {
-    b = new Image().zoom(new B64(new IOFile("bird.jpg").read()), Int.get(20), Int.get(20));
-  } catch (Exception e) {
-    // TODO Auto-generated catch block
-    e.printStackTrace();
-  }
-
-  assertNotNull(b);
 }
 /**
  * Test to zoom an image by height.
@@ -298,21 +283,6 @@ public void testequals() throws Exception {
       new B64(new IOFile("bird.jpg").read())), true);
 }
 /**
- * Test exif info of an image.
- */
-@Test
-public void testexif() {
-  String[] b = null;
-  try {
-    b = new Image().exif("bird.jpg");
-  } catch (Exception e) {
-    // TODO Auto-generated catch block
-    e.printStackTrace();
-  }
-
-  assertNotNull(b);
-}
-/**
  * Test edge of an image.
  */
 @Test
@@ -379,21 +349,6 @@ public void testchop() {
   try {
     b = new Image().chop(new B64(new IOFile("bird.jpg").read()),
         Int.get(3), Int.get(4));
-  } catch (Exception e) {
-    // TODO Auto-generated catch block
-    e.printStackTrace();
-  }
-  assertNotNull(b);
-}
-/**
- * Test scale of an image.
-*/
-@Test
-public void testscale()  {
-  B64 b = null;
-  try {
-    b = new Image().scale(new B64(new IOFile("bird.jpg").read()),
-        Int.get(70), Int.get(80));
   } catch (Exception e) {
     // TODO Auto-generated catch block
     e.printStackTrace();

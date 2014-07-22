@@ -8,7 +8,6 @@ import java.io.*;
 import java.util.*;
 
 import javax.imageio.*;
-import javax.imageio.metadata.*;
 import javax.imageio.stream.*;
 
 import org.basex.query.*;
@@ -46,6 +45,7 @@ public class Image extends QueryModule{
  private final int iterations = 1;
  /** boolean variable.*/
  private final boolean premultiplyAlpha = true;
+
  /**
   * Converts the specified image to another format.
    * @param input input image
@@ -54,27 +54,35 @@ public class Image extends QueryModule{
    * @throws Exception exception
   */
  public B64 convert(final B64 input, final String format)throws Exception {
+   if (!isSupportedImage(format)) {
+    throw new IllegalAccessException("Enter the correct format");
+ }
    return toBinary(toImage(input), format);
-  }
- /**
-	 * crops a given image.
-	 * @param input input
-	 * @param w Integer
-	 * @param h Integer
+ }
+/**
+   * crops a given image.
+	 * @param input Image
+	 * @param w Width
+	 * @param h Height
+	 * @param x x-coordinate
+	 * @param y y-coordinate
 	 * @return image
 	 * @throws Exception exception
 	 */
-  public B64 cropImage(final B64 input, final Int w, final Int h)throws Exception {
+  public B64 cropImage(final B64 input, final Int w, final Int h, final Int x, final Int y)
+      throws Exception {
 		 int width = (int) w.itr();
 		 int height = (int) h.itr();
-       BufferedImage p = toImage(input);
-	      BufferedImage dest = p.getSubimage(0, 0, width, height);
+     int ex = (int) x.itr();
+     int ey = (int) y.itr();
+		 BufferedImage p = toImage(input);
+	      BufferedImage dest = p.getSubimage(ex, ey, width, height);
 	      B64 b = toBinary(dest, format(input));
 	      return b;
 	   }
  /**
 	 * Gives emboss effect on the image.
-	 * @param input input
+	 * @param input Image
 	 * @return image
 	 * @throws Exception exception
 	 */
@@ -83,7 +91,7 @@ public class Image extends QueryModule{
 		 final BufferedImage image = toImage(input);
 		 int width = image.getWidth();
 		    int height = image.getHeight();
-    BufferedImage  dst = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+    BufferedImage  dst = new BufferedImage(width, height, image.getType());
         for (int i = 0; i < height; i++)
 		      for (int j = 0; j < width; j++) {
 		        int upperLeft = 0;
@@ -125,9 +133,9 @@ public class Image extends QueryModule{
 	/**
 	 * Resizes the specified image.
 	 * @param input input image
-	 * @param h Item
-	 * @param w Item
-	 * @return resulting image
+	 * @param h Height
+	 * @param w Width
+	 * @return  image
 	 * @throws Exception exception
 	 */
 	public B64 resize(final B64 input, final Int w, final Int h) throws Exception {
@@ -136,7 +144,7 @@ public class Image extends QueryModule{
        BufferedImage inputImage = toImage(input);
         BufferedImage outputImage = new BufferedImage(width,
         		height, inputImage.getType());
-        Graphics2D g2d = outputImage.createGraphics();
+        Graphics2D g2d = (Graphics2D) outputImage.getGraphics();
         g2d.drawImage(inputImage, 0, 0, width, height, null);
         g2d.dispose();
         B64 b = toBinary(outputImage, format(input));
@@ -144,13 +152,13 @@ public class Image extends QueryModule{
   }
 	/**
 	 * Zooms an image.
-	 * @param input B64
-	 * @param w item
-	 * @param h item
+	 * @param input image
+	 * @param w width
+	 * @param h Height
 	 * @return image
 	 * @throws Exception exception
 	 */
-	public B64 zoom(final B64 input, final Int w, final Int h) throws Exception {
+	private B64 zoom(final B64 input, final Int w, final Int h) throws Exception {
 		  BufferedImage inputImage = toImage(input);
       int width = (int) w.itr();
       int height = (int) h.itr();
@@ -158,7 +166,7 @@ public class Image extends QueryModule{
        BufferedImage outputImage = new BufferedImage(width,
        		height, inputImage.getType());
 
-       Graphics2D g2d = outputImage.createGraphics();
+       Graphics2D g2d = (Graphics2D) outputImage.getGraphics();
        g2d.drawImage(inputImage, 0, 0, width, height, null);
        g2d.dispose();
        B64 b = toBinary(outputImage, format(input));
@@ -166,46 +174,31 @@ public class Image extends QueryModule{
  }
 	/**
 	 * Zooms an image by its Height.
-	 * @param input B64
-	 * @param h Item
+	 * @param input Image
+	 * @param h Height
 	 * @return image
 	 * @throws Exception exception
 	 */
 	public B64 zoomheight(final B64 input, final Int h) throws Exception {
 		  BufferedImage inputImage = toImage(input);
-    int height = (int) h.itr();
-		    BufferedImage outputImage = new BufferedImage(inputImage.getWidth(),
-       		height, inputImage.getType());
-        Graphics2D g2d = outputImage.createGraphics();
-       g2d.drawImage(inputImage, 0, 0, inputImage.getWidth(), height, null);
-       g2d.dispose();
-       B64 b = toBinary(outputImage, format(input));
+      B64 b = zoom(input, Int.get(inputImage.getWidth()), h);
 		return b;
  }
 	/**
 	 * Zooms an image by its width.
-	 * @param input B64
-	 * @param w Item
+	 * @param input image
+	 * @param w Width
 	 * @return image
 	 * @throws Exception exception
 	 */
 	public B64 zoomwidth(final B64 input, final Int w) throws Exception {
-		 // reads input image
-       BufferedImage inputImage = toImage(input);
-       int width = (int) w.itr();
-       // creates output image
-       BufferedImage outputImage = new BufferedImage(width,
-    		   inputImage.getHeight(), inputImage.getType());
-             // scales the input image to the output image
-       Graphics2D g2d = outputImage.createGraphics();
-       g2d.drawImage(inputImage, 0, 0, width, inputImage.getHeight(), null);
-       g2d.dispose();
-       B64 b = toBinary(outputImage, format(input));
-		return b;
+	  BufferedImage inputImage = toImage(input);
+    B64 b = zoom(input, w , Int.get(inputImage.getHeight()));
+  return b;
  }
 	/**
 	 * Flops an image.
-	 * @param input B64
+	 * @param input image
 	 * @return image
 	 * @throws Exception exception
 	 */
@@ -215,7 +208,7 @@ public class Image extends QueryModule{
 	    int w = image.getWidth();
         int h = image.getHeight();
         BufferedImage dimg = new BufferedImage(w, h, image.getType());
-        Graphics2D g = dimg.createGraphics();
+        Graphics2D g = (Graphics2D) dimg.getGraphics();
         g.drawImage(image, 0, 0, w, h, w, 0, 0, h, null);
         g.dispose();
 			b = toBinary(dimg, format(input));
@@ -223,7 +216,7 @@ public class Image extends QueryModule{
     }
 	/**
 	 * Flips an image.
-	 * @param input B64
+	 * @param input image
 	 * @return image
 	 * @throws Exception exception
 	 */
@@ -233,7 +226,7 @@ public class Image extends QueryModule{
         int w = image.getWidth();
         int h = image.getHeight();
         BufferedImage dimg = new BufferedImage(w, h, image.getType());
-        Graphics2D g = dimg.createGraphics();
+        Graphics2D g = (Graphics2D) dimg.getGraphics();
         g.drawImage(image, 0, 0, w, h, 0, h, w, 0, null);
         g.dispose();
 	    b = toBinary(dimg, format(input));
@@ -241,9 +234,9 @@ public class Image extends QueryModule{
     }
 	/**
 	 * Gives the rotated image.
-	 * @param input B64
-	 * @param a item
-	 * @return Rotated image
+	 * @param input image
+	 * @param a angle
+	 * @return  image
 	 * @throws Exception exception
 	 */
 	public B64 rotate(final B64 input, final  Int a) throws Exception {
@@ -253,7 +246,7 @@ public class Image extends QueryModule{
         int w = image.getWidth();
         int h = image.getHeight();
         BufferedImage dimg = new BufferedImage(w, h, image.getType());
-        Graphics2D g = dimg.createGraphics();
+        Graphics2D g = (Graphics2D) dimg.getGraphics();
         g.rotate(Math.toRadians(ang), w / 2, h / 2);
         g.drawImage(image, null, 0, 0);
         g.dispose();
@@ -262,9 +255,9 @@ public class Image extends QueryModule{
     }
 	/**
 	 * Gets the water mark on an image.
-	 * @param input input data
+	 * @param input image
 	 * @param text String
-	 * @param s Item
+	 * @param s Size
 	 * @return image
 	 * @throws Exception exception
 	 */
@@ -277,17 +270,16 @@ public class Image extends QueryModule{
             AlphaComposite alphaChannel = AlphaComposite.getInstance(
                     AlphaComposite.SRC_OVER, 0.3f);
             g2d.setComposite(alphaChannel);
-            g2d.setColor(Color.RED);
+            g2d.setColor(Color.BLACK);
             g2d.setFont(new Font("Arial", Font.BOLD, size));
             FontMetrics fontMetrics = g2d.getFontMetrics();
             Rectangle2D rect = fontMetrics.getStringBounds(text, g2d);
             // calculates the coordinate where the String is painted
             int centerX = (sourceImage.getWidth() - (int) rect.getWidth()) / 2;
             int centerY = sourceImage.getHeight() / 2;
-            // paints the textual watermark
+            // paints the textual water mark
             g2d.drawString(text, centerX, centerY);
             g2d.dispose();
-            System.out.println("The tex watermark is added to the image.");
 			b = toBinary(sourceImage, format(input));
 		return b;
 	}
@@ -295,7 +287,7 @@ public class Image extends QueryModule{
 
 	/**
 	 * Returns the format of an image.
-	 * @param input input image
+	 * @param  input image
 	 * @return image format
 	 * @throws Exception exception
 	 */
@@ -313,7 +305,7 @@ public class Image extends QueryModule{
   }
 	/**
 	 * calculates the height of the image.
-	 * @param input input data
+	 * @param input Image
 	 * @return Height
 	 * @throws Exception exception
 	 */
@@ -325,7 +317,7 @@ public class Image extends QueryModule{
 	}
 	/**
 	 * calculates the width of the image.
-	 * @param input input data
+	 * @param input Image
 	 * @return width
 	 * @throws Exception exception
 	 */
@@ -336,7 +328,7 @@ public class Image extends QueryModule{
 	}
 	/**
 	 * Creates an image instance from the given binary data.
-	 * @param input input data
+	 * @param input Image
 	 * @return image
 	 * @throws Exception exception
 	 */
@@ -347,7 +339,7 @@ public class Image extends QueryModule{
 	}
 	/**
 	 * Creates an image instance from the given binary data.
-	 * @param image buffered image
+	 * @param image Buffered image
 	 * @param format image format
 	 * @return binary data
 	 * @throws Exception  Exception
@@ -361,7 +353,7 @@ public class Image extends QueryModule{
 	 * Compresses an image.
 	 * @param input input
 	 * @param path String
-	 * @param p Item
+	 * @param p Compression Quality
 	 * @return Image
 	 * @throws Exception Exception
 	 */
@@ -371,14 +363,14 @@ public class Image extends QueryModule{
 	     float quality = (int) p.itr();
 	        img = toImage(input);
 	        Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName(format(input));
-	        @SuppressWarnings("cast")
-          ImageWriter writer = (ImageWriter) iter.next();
+
+          ImageWriter writer =  iter.next();
 	        //instantiate an ImageWriteParam object with default compression options
 	        ImageWriteParam iwp = writer.getDefaultWriteParam();
 	        //Set the compression quality
 	        iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
 	        iwp.setCompressionQuality(quality);
-	        //delete the file. If I dont the file size will stay the same
+	        //delete the file. If I don't delete the file, file size will stay the same
 	        //file.delete();
 	        ImageOutputStream output = ImageIO.createImageOutputStream(new File(path));
 	        writer.setOutput(output);
@@ -390,8 +382,8 @@ public class Image extends QueryModule{
 	}
 	/**
 	 * Creates a new image.
-	 * @param w item
-	 * @param h item
+	 * @param w Width
+	 * @param h Height
 	 * @param format String
 	 * @return Image
 	 * @throws Exception exception
@@ -410,8 +402,8 @@ public class Image extends QueryModule{
 	}
 	/**
 	 * Checks the equality of the two images.
-	 * @param image1 B64
-	 * @param image2 B64
+	 * @param image1 image
+	 * @param image2 image
 	 * @return boolean
 	 * @throws Exception exception
 	 */
@@ -431,39 +423,9 @@ public class Image extends QueryModule{
 		}
 		return true;
 	}
-/**.
-	 * Gives the exif information of the images.
-	 * @param fileName  String
-	 * @throws IOException   Ioexception
-	 * @throws FileNotFoundException File not found
-	 * @return String Array
-	 */
-	@SuppressWarnings("javadoc")
-  public String[] exif(final String fileName) throws Exception {
-		ImageInputStream iis = null;
-		String[] names = null;
-			iis = ImageIO.createImageInputStream(
-					 new BufferedInputStream(
-					  new FileInputStream(fileName)));
-			Iterator<ImageReader> readers =
-				 ImageIO.getImageReadersByMIMEType("image/jpeg");
-				IIOImage image = null;
-				if (readers.hasNext()) {
-				 ImageReader reader = /*(ImageReader)*/ readers.next();
-				 reader.setInput(iis, true);
-					image = reader.readAll(0, null);
-				  IIOMetadata metadata = image.getMetadata();
-				   names = metadata.getMetadataFormatNames();
-				 for (int i = 0; i < names.length; i++) {
-					 System.out.println("Format name: " + names[i]);
-					 System.out.println(metadata.getAsTree(names[i]));
-				 }
-				}
-				return names;
-	}
  /**.
 	 * Gets an edge effect on the image
-	 * @param input B64
+	 * @param input Image
 	 * @return image
 	 * @throws Exception Exception
 	 */
@@ -482,8 +444,8 @@ public class Image extends QueryModule{
 	}
 	/**
 	 * Overlays by taking an image.
-	 * @param input1 B64
-	 * @param input2 B64
+	 * @param input1 Image
+	 * @param input2 Image
 	 * @return image
 	 * @throws Exception exception
 	 */
@@ -493,7 +455,7 @@ public class Image extends QueryModule{
 			 BufferedImage imageOverlay = toImage(input2);
 			 int w = Math.max(image.getWidth(), imageOverlay.getWidth());
 			 int h = Math.max(image.getHeight(), imageOverlay.getHeight());
-			 BufferedImage combined = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+			 BufferedImage combined = new BufferedImage(w, h, image.getType());
 			 Graphics g = combined.getGraphics();
 			 g.drawImage(image, 0, 0, null);
 			 g.drawImage(imageOverlay, 0, 0, null);
@@ -502,19 +464,18 @@ public class Image extends QueryModule{
 	 }
 	/**
 	 * Adds noise to Image.
-	 * @param input B64
-	 * @param value Item
+	 * @param input image
+	 * @param value quantity
 	 * @return image
 	 * @throws Exception exception
 	 */
 public B64 noise(final B64 input, final Int value) throws Exception {
 
         B64 b = null;
-  		BufferedImage inputImage = null;
+  		BufferedImage inputImage =  toImage(input);
   		double stdDev = (int) value.itr();
-  			inputImage = toImage(input);
   			BufferedImage output = new BufferedImage(inputImage.getWidth(),
-  			    inputImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+  			    inputImage.getHeight(), inputImage.getType());
   		    output.setData(inputImage.getData());
   			Raster source = inputImage.getRaster();
   		    WritableRaster out = output.getRaster();
@@ -534,21 +495,22 @@ public B64 noise(final B64 input, final Int value) throws Exception {
   		            for (int k = 0; k < bands; k++) {
   		                newVal = stdDev * gaussian;
   		                currVal = source.getSample(i, j, k);
-    	  newVal = newVal + currVal;
-  		                if (newVal < 0)   newVal = 0.0;
+    	                newVal = newVal + currVal;
+    	                if (newVal < 0)   newVal = 0.0;
   		                if (newVal > 255) newVal = 255.0;
 
   		                out.setSample(i, j, k, (int) newVal);
-  		                b = toBinary(output, format(input));
+
   		            }
   		        }
   		    }
+  		    b = toBinary(output, format(input));
         return b;
 }
-      	/**
-      	 * creates contrast effect on an image.
-	 * @param input B64
-	 * @param value Item
+ /**
+   * creates contrast effect on an image.
+	 * @param input image
+	 * @param value quantity
  	 * @return image
 	 * @throws Exception Exception
 	 */
@@ -563,9 +525,9 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	}
 	/**
 	 * chops an image.
-	 * @param input B64
-	 * @param r Item
-	 * @param c Item
+	 * @param input Image
+	 * @param r rows
+	 * @param c columns
 	 * @return image
 	 * @throws Exception exception
 	 */
@@ -585,26 +547,23 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	            for (int y = 0; y < cols; y++) {
 
 	                imgs[count] = new BufferedImage(chunkWidth,
-	                    chunkHeight, BufferedImage.TYPE_INT_RGB);
+	                    chunkHeight, image.getType());
 
-	                Graphics2D gr = imgs[count++].createGraphics();
+	                Graphics2D gr = (Graphics2D) imgs[count++].getGraphics();
 	                gr.drawImage(image, 0, 0, chunkWidth, chunkHeight,
 	                    chunkWidth * y, chunkHeight * x, chunkWidth * y + chunkWidth,
 	                    chunkHeight * x + chunkHeight, null);
 	                gr.dispose();
 	            }
 	        }
-	        System.out.println("Splitting done");
-	        for (int i = 0; i < imgs.length; i++) {
+        for (int i = 0; i < imgs.length; i++) {
 	        	vb.add(toBinary(imgs[i], format(input)));
 	          }
-	        System.out.println("Mini images created");
-
 		return vb;
 	}
  /**
   * creates transparency of an image.
-  * @param input B64
+  * @param input Image
   * @return Image
   * @throws Exception exception
   */
@@ -617,7 +576,7 @@ public B64 noise(final B64 input, final Int value) throws Exception {
         int width = initImage.getWidth(null),
             height = initImage.getHeight(null);
 
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage image = new BufferedImage(width, height, initImage.getType());
         Graphics g = image.getGraphics();
         g.drawImage(initImage, 0, 0, null);
 
@@ -640,7 +599,7 @@ public B64 noise(final B64 input, final Int value) throws Exception {
     }
 	/**
 	 * Sharpens an image.
-	 * @param input B64
+	 * @param input Image
 	 * @return image
 	 * @throws Exception exception
 	 */
@@ -660,31 +619,9 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	     b = toBinary(op, format(input));
 		 return b;
 	    }
-	 /**
-	  * scales an image.
-	  * @param input B64
-	  * @param w integer
-	  * @param h integer
-	  * @return Image
-	  * @throws Exception exception
-	  */
-	 public B64 scale(final B64 input, final Int w, final Int h) throws Exception {
-         B64 b = null;
-    	BufferedImage src = toImage(input);
-    	int width = (int) w.itr();
-    	int height = (int) h.itr();
-        BufferedImage dest = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = dest.createGraphics();
-        AffineTransform at = AffineTransform.getScaleInstance(
-                (double) width / src.getWidth(),
-                (double) height / src.getHeight());
-        g.drawRenderedImage(src, at);
-        b = toBinary(dest, format(input));
-        return b;
-}
 	 /**.
 	  * creates a black and white image
-	  * @param input b64
+	  * @param input Image
 	  * @return Image
 	  * @throws Exception Exception
 	  */
@@ -694,14 +631,14 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	    		       BufferedImage im =
 	    		         new BufferedImage(bi.getWidth(),
 	    		             bi.getHeight(), BufferedImage.TYPE_BYTE_BINARY);
-	    		       Graphics2D g2d = im.createGraphics();
+	    		       Graphics2D g2d = (Graphics2D) im.getGraphics();
 	    		       g2d.drawImage(bi, 0, 0, null);
 	    		     b = toBinary(im, format(input));
 	       return b;
 	     }
 	  /**
-	   * creates a grayscale of an image.
-	   * @param input B64
+	   * creates a Gray scale of an image.
+	   * @param input Image
 	   * @return image
 	   * @throws Exception exception
 	   */
@@ -717,8 +654,8 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	  }
 	  /**
 	   * Increase or decreases an image brightness.
-	   * @param input B64
-	   * @param q item
+	   * @param input Image
+	   * @param q quantity
 	   * @return Image
 	   * @throws Exception exception
 	   */
@@ -728,10 +665,10 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 		  BufferedImage biSrc, biDest, bi;
 		  Graphics2D big;
 		  BufferedImage b = toImage(input);
-		  biSrc = new BufferedImage(b.getWidth(), b.getHeight(), BufferedImage.TYPE_INT_RGB);
-		  big = biSrc.createGraphics();
+		  biSrc = new BufferedImage(b.getWidth(), b.getHeight(), b.getType());
+		  big = (Graphics2D) biSrc.getGraphics();
          big.drawImage(b, 0, 0, null);
-         biDest = new BufferedImage(b.getWidth(), b.getHeight(), BufferedImage.TYPE_INT_RGB);
+         biDest = new BufferedImage(b.getWidth(), b.getHeight(), b.getType());
               bi = biSrc;
 		   RescaleOp rescale;
 		    float offset = 10;
@@ -743,8 +680,8 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	  }
 	  /**
 	   * Creates gradientImage.
-	   * @param w Item
-	   * @param h Item
+	   * @param w width
+	   * @param h height
 	   * @param gradient1 String
 	   * @param gradient2 String
 	   * @param extension String
@@ -773,9 +710,9 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	  /**
 	   * Checks whether a format is supported.
 	   * @param extName String
-	   * @return boolean
+	   * @return Boolean
 	   */
-	  public boolean isSupportedImage(final String extName) {
+	  public Boolean isSupportedImage(final String extName) {
 	        boolean isSupported = false;
 	        for (String format : ImageIO.getReaderFormatNames()) {
 	            if (format.equalsIgnoreCase(extName)) {
@@ -783,45 +720,27 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	                break;
 	            }
 	        }
-	        System.out.println(isSupported);
 	        return isSupported;
 	    }
 	  /**
 	   * Gives complete information of the image.
-	   * @param file String
+	   * @param input Image
 	   * @return String
 	   * @throws Exception exception
 	   */
-	  public String imageInfo(final String file) throws Exception {
-	       File p = new File(file);
-    	  BufferedImage pq = ImageIO.read(p);
-    	  String s = pq.toString();
+	  public String imageInfo(final B64 input) throws Exception {
+	       BufferedImage b = toImage(input);
+	    	  String s = b.toString();
      return s;
       }
 	  /**
-	   * creates a compatible image.
-	   * @param src Buffered Image
-	   * @param dstCM colorModel
-	   * @return CompatibleImage
-	   */
-  	  private BufferedImage createCompatibleDestImage(final BufferedImage src,
-  	      final ColorModel dstCM) {
-        ColorModel dstCM2 = null;
-  	    if (dstCM == null)
-  	    dstCM2 = src.getColorModel();
-      return new BufferedImage(dstCM2,
-          dstCM2.createCompatibleWritableRaster(src.getWidth(),
-          src.getHeight()), dstCM2.isAlphaPremultiplied(), null);
-  }
-	  /**
 	   * Increase or decrease blur of an image.
-	   * @param input B64
-	   * @param value Item
+	   * @param input Image
+	   * @param value Quantity
 	   * @return Image
 	   * @throws Exception Exception
 	   */
 
-    @SuppressWarnings({"null"})
     public  B64 blur(final B64 input, final Int value) throws Exception {
            B64 b = null;
 		  BufferedImage src = toImage(input);
@@ -830,8 +749,7 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 		   int width = src.getWidth();
 	        int height = src.getHeight();
 
-	        if (dst == null)
-	            dst = this.createCompatibleDestImage(src, null);
+           dst = new BufferedImage(width, height, src.getType());
 
 	        int[] inPixels = new int[width * height];
 	        int[] outPixels = new int[width * height];
@@ -852,11 +770,10 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	  /**
 	   *Blurs an image with motion.
 	   * @param input B64
-	   * @param value Item
+	   * @param value quantity
 	   * @return Image
 	   * @throws Exception exception
 	   */
-    @SuppressWarnings({"null"})
 	  public B64 motionblur(final B64 input, final Int value) throws Exception {
 		  B64 b1 = null;
 		  BufferedImage src = toImage(input);
@@ -867,8 +784,7 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 		      int width = src.getWidth();
 	        int height = src.getHeight();
 
-	        if (dst == null)
-	            dst = createCompatibleDestImage(src, null);
+	            dst = new BufferedImage(width, height, src.getType());
 
 	        int[] inPixels = new int[width * height];
 	        int[] outPixels = new int[width * height ];
@@ -931,10 +847,10 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 					if (count == 0) {
 						outPixels[index] = inPixels[index];
 					} else {
-						a = PixelUtils.clamp(/*(int)*/a / count);
-						r = PixelUtils.clamp(/*(int)*/r / count);
-						g = PixelUtils.clamp(/*(int)*/g / count);
-						b = PixelUtils.clamp(/*(int)*/b / count);
+						a = PixelUtils.clamp(a / count);
+						r = PixelUtils.clamp(r / count);
+						g = PixelUtils.clamp(g / count);
+						b = PixelUtils.clamp(b / count);
 						outPixels[index] = (a << 24) | (r << 16) | (g << 8) | b;
 					}
 					index++;
@@ -949,12 +865,11 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	  /**
 	   * Blurs an image.
 	   * @param input B64
-	   * @param value1 Integer
-	   * @param value2 Integer
+	   * @param value1 HeightRadius
+	   * @param value2 WidthRadius
 	   * @return Image
 	   * @throws Exception exception
 	   */
-    @SuppressWarnings({"null"})
 	  public B64 boxblurfilter(final B64 input,
 	      final Int value1, final Int value2)throws Exception {
 		   B64 b = null;
@@ -965,8 +880,8 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 
 	        int width = src.getWidth();
 	        int height = src.getHeight();
-       if (dst == null)
-	            dst = createCompatibleDestImage(src, null);
+
+	        dst = new BufferedImage(width, height, src.getType());
 
 	        int[] inPixels = new int[width * height];
 	        int[] outPixels = new int[width * height];
@@ -987,14 +902,15 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	  /**
 	   * Blurs an image by its lens.
 	   * @param input B64
-	   * @param value Item
+	   * @param value quality
 	   * @return image
 	 * @throws Exception Exception
 	   */
-    @SuppressWarnings({"hiding", "null", "unused"})
+
     public B64 lensBlurfilter(final B64 input, final Int value)throws Exception {
 	        B64 b1 = null;
-	        float radius = (int) value.itr();
+	        @SuppressWarnings("hiding")
+          float radius = (int) value.itr();
 	        BufferedImage src = toImage(input);
 	        BufferedImage dst = null;
 		  int width = src.getWidth();
@@ -1012,8 +928,7 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 			tileHeight = iradius < 32 ? Math.min(128, height + 2 * iradius)
 			                          : Math.min(256, height + 2 * iradius);
 
-	        if (dst == null)
-	            dst = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            dst = new BufferedImage(width, height, src.getType());
 
 	        while (rows < tileHeight) {
 	            rows *= 2;
@@ -1053,9 +968,7 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 							double a = Math.atan2(dy, dx) + rangle;
 							a = ImageMath.mod(a, polyAngle * 2) - polyAngle;
 							f = Math.cos(a) * polyScale;
-						} else
-							f = 1;
-						f = f * r < radius ? 1 : 0;
+						}
 					}
 					total += (float) f;
 
@@ -1215,11 +1128,11 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	  /**
 	   * Blurs an image by cleaning the image.
 	   * @param input B64
-	   * @param value Item
+	   * @param value quality
 	   * @return image
 	 * @throws Exception exception
 	   */
-    @SuppressWarnings({"null"})
+    //@SuppressWarnings({"null"})
 	  public B64 smartBlurfilter(final B64 input, final Int value) throws Exception {
 	        B64 b = null;
 	        int hRad = (int) value.itr();
@@ -1228,8 +1141,8 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 		  int width = src.getWidth();
 	        int height = src.getHeight();
 
-	        if (dst == null)
-	            dst = createCompatibleDestImage(src, null);
+	 //       if (dst == null)
+            dst = new BufferedImage(width, height, src.getType());
 
 	        int[] inPixels = new int[width * height];
 	        int[] outPixels = new int[width * height];
@@ -1362,7 +1275,7 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	  /**
 	   * Gives  unsharp blur of an image.
 	   * @param input B64
-	   * @param am Item
+	   * @param am quantity
 	   * @return B64 Image
 	   * @throws Exception exception
 	   */
@@ -1375,8 +1288,8 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 	    int width = src.getWidth();
 	        int height = src.getHeight();
 
-	        if (dst == null)
-	            dst = createCompatibleDestImage(src, null);
+	      if (dst == null)
+            dst = new BufferedImage(width, height, src.getType());
 
 	        int[] inPixels = new int[width * height];
 	        int[] outPixels = new int[width * height];
@@ -1454,4 +1367,3 @@ public B64 noise(final B64 input, final Int value) throws Exception {
 			return new Kernel(rows, 1, matrix);
 		}
 }
-
